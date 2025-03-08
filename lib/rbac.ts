@@ -26,6 +26,23 @@ export type Permission = {
   action: string;
 };
 
+// export async function getUserRoles(userId: string): Promise<Role[]> {
+//   const { data, error } = await supabase
+//     .from('user_roles')
+//     .select(`
+//       role_id,
+//       roles (
+//         id,
+//         name,
+//         description
+//       )
+//     `)
+//     .eq('user_id', userId);
+
+//   if (error) throw error;
+//   return data?.map(item => item.roles) || [];
+// }
+
 export async function getUserRoles(userId: string): Promise<Role[]> {
   const { data, error } = await supabase
     .from('user_roles')
@@ -40,8 +57,10 @@ export async function getUserRoles(userId: string): Promise<Role[]> {
     .eq('user_id', userId);
 
   if (error) throw error;
-  return data?.map(item => item.roles) || [];
+  
+  return data?.map(item => item.roles).flat() || [];
 }
+
 
 export async function getUserPermissions(userId: string): Promise<Permission[]> {
   const { data: roles, error: rolesError } = await supabase
@@ -68,8 +87,39 @@ export async function getUserPermissions(userId: string): Promise<Permission[]> 
     .in('role_id', roleIds);
 
   if (permissionsError) throw permissionsError;
-  return permissions?.map(item => item.permissions) || [];
+
+  // Flatten the array before returning
+  return permissions?.map(item => item.permissions).flat() || [];
 }
+
+
+// export async function getUserPermissions(userId: string): Promise<Permission[]> {
+//   const { data: roles, error: rolesError } = await supabase
+//     .from('user_roles')
+//     .select('role_id')
+//     .eq('user_id', userId);
+
+//   if (rolesError) throw rolesError;
+//   if (!roles) return [];
+
+//   const roleIds = roles.map(r => r.role_id);
+
+//   const { data: permissions, error: permissionsError } = await supabase
+//     .from('role_permissions')
+//     .select(`
+//       permissions (
+//         id,
+//         name,
+//         description,
+//         resource,
+//         action
+//       )
+//     `)
+//     .in('role_id', roleIds);
+
+//   if (permissionsError) throw permissionsError;
+//   return permissions?.map(item => item.permissions) || [];
+// }
 
 export async function hasPermission(userId: string, permissionName: string): Promise<boolean> {
   try {
